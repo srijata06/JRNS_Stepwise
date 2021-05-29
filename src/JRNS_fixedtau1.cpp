@@ -42,7 +42,7 @@ List JRNSfixed(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, doub
 	double a = 0;
     double b = 0;
     double lambda = 0;
-    double q2 = 1-(1/(double)q);  //needs to be q instead of p!!!!
+    double q2 = 1-(1/(double)q);  
 	double new1;
 	int components = 1;
 	int rand = 1;
@@ -134,13 +134,13 @@ List JRNSfixed(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, doub
 				lambda = R::rgamma(r1 + 0.5, 1/(0.5*Omega(j,k)*Omega(j,k) + s1));   
 			   }
                 
-			   /*if(lambda == 0) {
+			   if(lambda == 0) {
 				   P(1) = 0;
 			   }
 			   else {
 				   P(1) = sqrt(lambda/(double(n)*a+lambda)) * exp((double(n)*b)*(double(n)*b)/(2*(double(n)*a+lambda))) *(1-q2)/q2; 
-			   }*/
-			   P(1) = sqrt(lambda/(double(n)*a+lambda)) * exp((double(n)*b)*(double(n)*b)/(2*(double(n)*a+lambda))) *(1-q2)/q2; 
+			   }
+			  
                P(0) = 1;
         
 				
