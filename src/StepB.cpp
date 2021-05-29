@@ -76,7 +76,12 @@ List StepB(mat B_ini, mat Y, mat X, int nmc, int burnin, double r1 = 1e-4, doubl
 				eta = R::rgamma(r1 + 0.5, 1/(0.5*B(j,k)*B(j,k) + s1));   
 			   }
                
-			P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1; 
+			if(eta == 0) {
+				   P_B(1) = 0;
+			   }
+			   else {
+				   P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1; 
+			   }
             P_B(0) = 1;
             tau = 1/sqrt(eta);
 			c1 = b + eta;
