@@ -26,8 +26,6 @@ List StepBhp(mat B_ini, vec sigma2_ini, mat Y, mat X, int nmc, int burnin, doubl
 	B = B_ini ;
 	double tau;
 	double eta;
-	//double p1 = (double)p;
-    //double q1 = 1-(1/p1);
 	double q1;
 	double nb ;
 	vec resid =zeros(p);
@@ -36,23 +34,17 @@ List StepBhp(mat B_ini, vec sigma2_ini, mat Y, mat X, int nmc, int burnin, doubl
 	double b;
 	double c2 ;
 	
-	//double q1_new = 0;
 	int components = 1;
 	vec P_B = zeros(2);
 	vec var_mod = sigma2_ini;
 	cube Bcount = zeros(p,q,2);
-    mat CI_lower = zeros(p,q);
+        mat CI_lower = zeros(p,q);
 	mat CI_upper = zeros(p,q);
 	cube CI = zeros(p,q,2);
 	mat Bsum = zeros(p,q);
 	cube out = zeros(p,q,nmc+1);
-	//cube P0 = zeros(p,q,nmc+1);
-	//cube P1 = zeros(p,q,nmc+1);
-    vec myvec = zeros(2);
+	vec myvec = zeros(2);
 	
-	//mat D = zeros(p,q);
-    //time_t tp;
-    //int start_time = time(&tp);
 	clock_t time_start, time_end;
     time_start = clock();
     
@@ -81,11 +73,16 @@ List StepBhp(mat B_ini, vec sigma2_ini, mat Y, mat X, int nmc, int burnin, doubl
 			   }
 			   else{
 				eta = R::rgamma(r1 + 0.5, 1/((0.5*B(j,k)*B(j,k)/var_mod(k)) + s1));  
-                q1 = R::rbeta(alpha1,beta1+1);				
+                                q1 = R::rbeta(alpha1,beta1+1);				
 			   }
                
 			   
-			P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1;
+			if(eta == 0) {
+				   P_B(1) = 0;
+			   }
+			   else {
+				   P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1; 
+			   }
             P_B(0) = 1;
             tau = 1/sqrt(eta);
 			c1 = b + eta;
