@@ -53,9 +53,11 @@ List StepOmega(mat S, mat temp, int nmc, int burnin, int n, double r = 1e-4, dou
 		else{
 		lambda = R::rgamma(r + 0.5, 1/(0.5*Omega(j,k)*Omega(j,k) + s));   
 		}
-         
-        
+                if(lambda == 0){
+			P(1) = 0;
+		}else{
 		P(1) = sqrt(lambda/(n*a+lambda)) * exp((n*b)*(n*b)/(2*(n*a+lambda))) *(1-q2)/q2;
+		}
         P(0) = 1;
 		
 	
@@ -91,10 +93,8 @@ List StepOmega(mat S, mat temp, int nmc, int burnin, int n, double r = 1e-4, dou
             OmegaSum(j,k) +=  Omega(j,k);
             OmegaSum(k,j) += Omega(k,j);
 			}
-            
-    	      
-    	       
-          } else {
+            	      
+    	   } else {
             Omega(j,k) = Omega(k,j) = 0;
           }
      
