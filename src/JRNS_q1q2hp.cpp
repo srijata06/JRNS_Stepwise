@@ -88,7 +88,13 @@ List JRNShp(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double 
 				q1 = R::rbeta(alpha1,beta1+1);
 			}
              
-			P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1; 
+		if(eta == 0){
+                	P_B(1) =0;
+		}
+		else{
+            		P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1;
+		}
+			  
             P_B(0) = 1;
 			
 		    c1 = b + eta;
@@ -158,8 +164,12 @@ List JRNShp(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double 
 				q2 = R::rbeta(alpha2,beta2+1);
 			   }
                
-			   
-			   P(1) = sqrt(lambda/(a+lambda)) * exp(d2*d2/(2*(a+lambda))) *(1-q2)/q2; 
+			   if(lambda == 0) {
+				   P(1) = 0;
+			   }
+			   else {
+				   P(1) = sqrt(lambda/(a+lambda)) * exp(d2*d2/(2*(a+lambda))) *(1-q2)/q2; 
+			   }
                P(0) = 1;
         
 				
