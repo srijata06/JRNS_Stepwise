@@ -49,15 +49,19 @@ List StepOmegahp(mat S, mat temp, int nmc, int burnin, int n, double r = 1e-4, d
 		
         if((Omega(j,k) == 0)){
 		 lambda = R::rgamma(r, s);
-         q2 = R::rbeta(alpha2+1,beta2);		 
+                q2 = R::rbeta(alpha2+1,beta2);		 
 	    }
 		else{
 		lambda = R::rgamma(r + 0.5, 1/(0.5*Omega(j,k)*Omega(j,k) + s));   
 		q2 = R::rbeta(alpha2+1,beta2);
 		}
-         
-        
-		P(1) = sqrt(lambda/(n*a+lambda)) * exp((n*b)*(n*b)/(2*(n*a+lambda))) *(1-q2)/q2; 
+	      
+         if(lambda == 0)	{
+            P(1) = 0;
+	    }  
+	    else{
+        P(1) = sqrt(lambda/(n*a+lambda)) * exp((n*b)*(n*b)/(2*(n*a+lambda))) *(1-q2)/q2; 
+	    }
         P(0) = 1;
 		
 		
