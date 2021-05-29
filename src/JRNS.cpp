@@ -86,30 +86,22 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 				eta = R::rgamma(r1 + 0.5, 1/(0.5*B(r,s)*B(r,s) + s1));   
 			   }
                
-			   /*if(eta == 0) {
+			   if(eta == 0) {
 				   P_B(1) = 0;
 			   }
 			   else {
 				   P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1; 
-			   }*/
-			   P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1; 
-            P_B(0) = 1;
+			   }
+            	P_B(0) = 1;
 			
-			//CHECKING FOR NAs in P_B
-			    if(P_B.has_nan() == 1) {
-				    Rcout << "[P_B] it: r,s = " << it <<" : " << r << ", " << s <<"\n";
-				    Rcout << "c2,Omega2(s,s),Omega2(s,s),eta = " << c2 <<" , " << sum(Omega.row(s) % Omega.row(s)) << ", " << Omega2(s,s) << ", " << eta <<"\n";
-			    }
-		    
-			c1 = b + eta;
-			if(P_B.has_inf()==true){
+	    	c1 = b + eta;
+		if(P_B.has_inf()==true){
 			   	
                 int components = 1;
                 new1 = R::rnorm(c2/c1, sqrt(1/c1));
                   
-                if((it > burnin)){
-                  	
-				Bcount(r,s,components) += 1;
+                if((it > burnin)){  	
+			Bcount(r,s,components) += 1;
                 Bsum(r,s) +=  new1;
                 
                 }
@@ -165,7 +157,12 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 				lambda = R::rgamma(r1 + 0.5, 1/(0.5*Omega(j,k)*Omega(j,k) + s1));   
 			   }
                
-			   P(1) = sqrt(lambda/(a+lambda)) * exp(d2*d2/(2*(a+lambda))) *(1-q2)/q2;
+			   if(lambda == 0) {
+				   P(1) = 0;
+			   }
+			   else {
+				   P(1) = sqrt(lambda/(a+lambda)) * exp(d2*d2/(2*(a+lambda))) *(1-q2)/q2; 
+			   }
                P(0) = 1;
                
 			   
