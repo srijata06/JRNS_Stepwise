@@ -167,7 +167,7 @@ List StepOmega(mat S, mat temp, int nmc, int burnin, int n, double r = 1e-4, dou
 	        if(eigmin < 0){
 	            
                 Rcout << "Omega is not pd in iteration : " << it <<"\n";	   
-	            mat Omeganew = Omega - (eigmin + 0.01) * I;
+	            mat Omeganew = Omega - (eigmin - 0.01) * I;
     	
 		        if(it > burnin){
 		            for(int j=0; j<p; j++){
