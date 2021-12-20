@@ -279,7 +279,7 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 	        if(eigmin < 0){
 	            
                 Rcout << "Omega is not pd in iteration : " << it <<"\n";	   
-	            mat Omeganew = Omega - (eigmin + 0.01) * I;
+	            mat Omeganew = Omega - (eigmin - 0.01) * I;
     	
 		        if(it > burnin){
 		            for(int j=0; j<q; j++){
