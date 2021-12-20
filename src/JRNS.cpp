@@ -1,3 +1,4 @@
+
 #include <RcppArmadillo.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -14,7 +15,8 @@ using namespace std;
 
 
 // [[Rcpp::export]]
-List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1 = 1e-4, double s1 = 1e-8){
+List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1 = 1e-4, double s1 = 1e-8,double alpha1 = 1,double beta1 = 1,double alpha2 = 1, double beta2 = 1,int posdef = 0, int hyp = 0){
+	
 	
 	int n = Y.n_rows;
 	int p = B_ini.n_rows;
@@ -30,10 +32,7 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 	mat Bhat = zeros(p,q);
 	mat Omegahat = zeros(q,q);
 	
-	
-	double p1 = (double)p;
-    double q1 = 1-(1/p1);
-	
+	double q1 = 1-(1/(double)p);
 	vec resid =zeros(p);
 	
 	double b ;
@@ -43,12 +42,14 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
     double d2 = 0;
     double lambda = 0;
 	double eta = 0;
-    double q2 = 1-(1/(double)q);  
+    double q2 = 1-(1/(double)q);
 	double new1;
+	double v,rho;
 	
 	int components = 1;
 	int rand = 1;
 	double bd = 0;
+	double nb, nomega;
 	vec P_B = zeros(2);
 	vec var_mod = zeros(q);
 	cube Bcount = zeros(p,q,2);
@@ -59,9 +60,12 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 	cube out2 = zeros(q,q,nmc+1);
 	cube B_avg = zeros(p,q,nmc+burnin+1);
     vec myvec = zeros(2);
+	vec mhvec = zeros(2);
     vec P = zeros(2);
-    
-	clock_t time_start, time_end;
+	vec probdiag = zeros(2);
+	mat I = eye(q,q);
+	
+    clock_t time_start, time_end;
     time_start = clock();
     
     for(int t=0; t<2;t++){
@@ -73,35 +77,46 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 		
 		mat M1 = XtY*Omega2;
 		
+		if(hyp == 1){
+		uvec idx1 = find(B != 0);
+	    nb = idx1.size();	
+		q1 = R::rbeta((double)p * (double)q - nb + alpha1, nb + beta1);	
+		}			
+		
+			
 		for(int r=0; r<p; r++){
 		
 		  for(int s=0; s<q; s++){	
 		  
 		    b = XtX(r,r)*Omega2(s,s);
 		  	c2 = M1(r,s) - sum(Omega2.col(s) % M2.col(r)) + B(r,s)*XtX(r,r)*Omega2(s,s);
+				
+			
 		  	if((B(r,s) == 0)){
-				eta = R::rgamma(r1, s1);   
+				eta = R::rgamma(r1, s1);  
 			   }
 			   else{
 				eta = R::rgamma(r1 + 0.5, 1/(0.5*B(r,s)*B(r,s) + s1));   
-			   }
-               
-			   if(eta == 0) {
-				   P_B(1) = 0;
-			   }
-			   else {
-				   P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1; 
-			   }
-            	P_B(0) = 1;
+				
+			}
 			
-	    	c1 = b + eta;
-		if(P_B.has_inf()==true){
+            if(eta == 0){
+                P_B(1) =0;
+			}
+			else{
+            P_B(1) = sqrt(eta/(b + eta)) * exp(c2*c2/(2*(b + eta))) *(1-q1)/q1;
+			}			
+            P_B(0) = 1;
+			
+		    c1 = b + eta;
+			if(P_B.has_inf()==true){
 			   	
                 int components = 1;
                 new1 = R::rnorm(c2/c1, sqrt(1/c1));
                   
-                if((it > burnin)){  	
-			Bcount(r,s,components) += 1;
+                if((it > burnin)){
+                  	
+				Bcount(r,s,components) += 1;
                 Bsum(r,s) +=  new1;
                 
                 }
@@ -143,6 +158,13 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 	    mat E = Y-X*B;
         mat S =  E.t()*E;
 		
+		if(hyp == 1){
+		uvec idx2 = find(Omega != 0);
+	    nomega = 0.5*(idx2.size() - (double)q);
+		q2 = R::rbeta(0.5 * (double)q * ((double)q -1) - nomega + alpha2, nomega + beta2);
+		}
+		
+		
 		for(int j=0; j<(q-1); j++){
             for(int k=(j+1); k<q; k++){
             	
@@ -150,11 +172,14 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
                d2 = - sum(Omega.col(j)%S.col(k) + Omega.col(k)%S.col(j)) + Omega(j,k)*a;
                
 			   
+			   
 			   if((Omega(j,k) == 0)){
 				lambda = R::rgamma(r1, s1);   
+				
 			   }
 			   else{
 				lambda = R::rgamma(r1 + 0.5, 1/(0.5*Omega(j,k)*Omega(j,k) + s1));   
+				
 			   }
                
 			   if(lambda == 0) {
@@ -164,15 +189,13 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 				   P(1) = sqrt(lambda/(a+lambda)) * exp(d2*d2/(2*(a+lambda))) *(1-q2)/q2; 
 			   }
                P(0) = 1;
-               
 			   
-					
+		
                if(P.has_inf()==true){
                  int rand = 1;
                  Omega(j,k) = Omega(k,j) = R::rnorm(d2/(a+lambda), 1/sqrt(a + lambda));
 				 
 				 
-          
                  if((it > burnin)){
 				 
                      count2(j,k,rand) += 1;
@@ -215,17 +238,57 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 		   
 		   
            bd = sum(Omega.col(j)%S.col(j)) - Omega(j,j)*S(j,j) + (R::rgamma(r1 + 1, 1/(abs(Omega(j,j)) + s1)));
-           Omega(j,j) = (sqrt(bd*bd + 4*S(j,j)*(double)n) - bd)/(2*S(j,j));
+           
+		   double mode = (sqrt(bd*bd + 4*S(j,j)*(double)n) - bd)/(2*S(j,j));
+		   v = R::rnorm(mode, 0.001);
+		   rho = std::min(exp(n * (log(v) - log(Omega(j,j))) - 0.5 * S(j,j) * ((v*v) - (Omega(j,j)*Omega(j,j))) - bd * (v - Omega(j,j))),1.0);
+		   
+		   
+		   mhvec(0) = v;
+		   mhvec(1) = Omega(j,j);
+		   probdiag(0) = rho;
+		   probdiag(1) = 1-rho;
+		   
+		   Omega(j,j) = (Rcpp::RcppArmadillo::sample(mhvec,1,false,probdiag))(0);
 		   if(it > burnin)
 		    sum2(j,j) += Omega(j,j);
 		   
+		   
+		   
         }
         bd = sum(Omega.col(q-1)%S.col(q-1)) - Omega(q-1,q-1)*S(q-1,q-1) + (R::rgamma(r1 + 1, 1/(abs(Omega(q-1, q-1)) + s1)));
-        Omega(q-1,q-1) = (sqrt(bd*bd + 4*S(q-1,q-1)*(double)n) - bd)/(2*S(q-1,q-1));
+        double mode = (sqrt(bd*bd + 4*S(q-1,q-1)*(double)n) - bd)/(2*S(q-1,q-1));
+		v = R::rnorm(mode, 0.001 );
+		rho = std::min(exp(n * (log(v) - log(Omega(q-1,q-1))) - 0.5 * S(q-1,q-1) * ((v*v) - (Omega(q-1,q-1)*Omega(q-1,q-1))) - bd * (v - Omega(q-1,q-1))),1.0);
+		
+		
+		mhvec(0) = v;
+		mhvec(1) = Omega(q-1,q-1);
+		probdiag(0) = rho;
+		probdiag(1) = 1-rho;
+		
+		Omega(q-1,q-1) = (Rcpp::RcppArmadillo::sample(mhvec,1,false,probdiag))(0);
 		if(it > burnin)
           sum2(q-1,q-1) += Omega(q-1,q-1);
 		
 		Omega2 = Omega*Omega;
+		
+		if( posdef == 1){
+            double eigmin = min(eig_sym(Omega));
+			
+	        if(eigmin < 0){
+	            
+                Rcout << "Omega is not pd in iteration : " << it <<"\n";	   
+	            mat Omeganew = Omega - (eigmin + 0.01) * I;
+    	
+		        if(it > burnin){
+		            for(int j=0; j<q; j++){
+		                sum2(j,j) = sum2(j,j) - Omega(j,j) + Omeganew(j,j);
+	                }
+		        }
+	            Omega = Omeganew;
+	        }
+	    }
 		
 	if(it - floor(it/1000)*1000 == 0){
       vec iteration = ones(1)*it;
@@ -239,7 +302,7 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
 	for (int mi = 0 ; mi < p ; mi++){
        for(int mj = 0 ; mj < q ; mj++){
        	
-          if(Bcount(mi,mj,0)> (nmc/2)){
+          if(Bcount(mi,mj,0)> (0.5*nmc)){
         
              Bhat(mi,mj) = 0;
         
@@ -254,7 +317,7 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
    for(int ni = 0; ni < (q-1); ni++){
     for(int nj = (ni+1); nj < q; nj++){
     	
-      if(count2(ni,nj,0) > (nmc/2)){
+      if(count2(ni,nj,0) > (0.5*nmc)){
       	
         Omegahat(ni,nj) = 0;
         Omegahat(nj,ni) = 0;
@@ -274,3 +337,4 @@ List JRNS(mat B_ini, mat Omega_ini, mat Y, mat X, int nmc, int burnin, double r1
        
 }
 	
+
